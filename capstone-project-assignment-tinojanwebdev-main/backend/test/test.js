@@ -17,6 +17,18 @@ afterEach(async () => {
 });
 
 describe("Teacher Endpoints", () => {
+  it("POST /getTeacherInfo returns only the requested teacher", async () => {
+    const res = await requestWithSupertest.post("/getTeacherInfo").send({ id: 10002 });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ id: 10002, name: "Saman De Silva", age: 40 }]);
+  });
+
+  it("POST /getTeacherInfo does not interpret the ID as SQL", async () => {
+    const res = await requestWithSupertest.post("/getTeacherInfo").send({ id: "10002 OR 1=1" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
   it("GET /listTeachers should show all teachers", async () => {
     const res = await requestWithSupertest.get("/listTeachers");
     expect(res.status).toEqual(200);
@@ -111,6 +123,18 @@ describe("Teacher Endpoints", () => {
 });
 
 describe("Student Endpoints", () => {
+  it("POST /getStudentInfo returns only the requested student", async () => {
+    const res = await requestWithSupertest.post("/getStudentInfo").send({ id: 20001 });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ id: 20001, name: "Supun Mihiranga", age: 10, hometown: "Colombo" }]);
+  });
+
+  it("POST /getStudentInfo returns no rows for an unknown ID", async () => {
+    const res = await requestWithSupertest.post("/getStudentInfo").send({ id: -1 });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
   it("GET /listStudents should show all students", async () => {
     const res = await requestWithSupertest.get("/listStudents");
     expect(res.status).toEqual(200);
@@ -210,4 +234,13 @@ describe("Student Endpoints", () => {
       "hometown": "Kandy"
     });
   });
+});
+
+it("GET /dbinitialize restores the seed data before responding", async () => {
+  await requestWithSupertest.post("/deleteStudent").send({ id: 20001 });
+  const res = await requestWithSupertest.get("/dbinitialize");
+  expect(res.status).toBe(200);
+  const students = await requestWithSupertest.get("/listStudents");
+  expect(students.body).toHaveLength(3);
+  expect(students.body).toContainEqual({ id: 20001, name: "Supun Mihiranga", age: 10, hometown: "Colombo" });
 });

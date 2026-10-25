@@ -12,7 +12,9 @@ export class TeacherTableComponent implements OnInit {
   faTrash = faTrash;
   faPlus = faPlus;
   faPenSquare = faPenSquare;
-  teacherData: any;
+  teacherData: any[] = [];
+  private allTeachers: any[] = [];
+  private searchText = '';
   selected: any;
 
   constructor(private service: AppServiceService, private router: Router) { }
@@ -45,7 +47,8 @@ export class TeacherTableComponent implements OnInit {
   getTeacherData() {
     this.selected = 'Teachers';
     this.service.getTeacherData().subscribe((response) => {
-      this.teacherData = Object.keys(response).map((key) => [response[key]]);
+      this.allTeachers = Object.keys(response).map((key) => [response[key]]);
+      this.search(this.searchText);
     }, (error) => {
       console.log('ERROR - ', error)
     })
@@ -54,24 +57,18 @@ export class TeacherTableComponent implements OnInit {
   getStudentData() {
     this.selected = 'Students';
     this.service.getStudentData().subscribe((response) => {
-      this.teacherData = response;
+      this.allTeachers = Object.keys(response).map((key) => [response[key]]);
+      this.search(this.searchText);
     }, (error) => {
       console.log('ERROR - ', error)
     })
   }
 
-  search(value) {
-    let foundItems = [];
-    if (value.length <= 0) {
-      this.getTeacherData();
-    } else {
-      this.teacherData.filter((teacher) => {
-        if (teacher[0].name.toLowerCase().indexOf(value) > -1) {
-          foundItems.push(teacher);
-        }
-      });
-      this.teacherData = foundItems;
-    }
+  search(value: string) {
+    this.searchText = value.trim().toLowerCase();
+    this.teacherData = this.allTeachers.filter((teacher) =>
+      teacher[0].name.toLowerCase().indexOf(this.searchText) > -1
+    );
   }
 
   deleteTeacher(itemid) {
